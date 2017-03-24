@@ -87,7 +87,7 @@ int main(int argc, char const *argv[])
 	while(true){
 
 		processos = API_Processos::ObterProcessos();	
-		
+
 		pMaior = processos[0];
 
 		for(Processo p : processos){
@@ -131,6 +131,7 @@ int main(int argc, char const *argv[])
 
 					usleep(250000);
 
+					
 					GPIO::output(PORTNUMBER::P9_14,VALUE::HIGH); 
 					GPIO::output(PORTNUMBER::P9_11,VALUE::HIGH);
 					GPIO::output(PORTNUMBER::P9_12,VALUE::HIGH);
@@ -138,7 +139,8 @@ int main(int argc, char const *argv[])
 					impressao(memoriaUtilizada, pMaior, 1,1,1);
 
 					usleep(250000);
-					/*
+					
+					
 					int i=0;
 					cout << "Apetar botão: ";
 					cin >>i;
@@ -153,16 +155,15 @@ int main(int argc, char const *argv[])
 
 						matarProcesso(pMaior);
 
-						sleep(2);
+						sleep(3);
 
 					}
 				}
 			}
 		}
-	processos.clear();
-	
-	sleep(1);
+
+		sleep(2);	
 	}
-	
+
 	return 0;
 }
