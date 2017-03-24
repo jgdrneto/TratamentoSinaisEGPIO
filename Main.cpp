@@ -1,0 +1,169 @@
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "GPIO.cpp"
+#include "API_Processos.cpp"
+
+using namespace std;
+
+vector<string> split(const string& str) {
+    stringstream ss(str);
+    return {istream_iterator<string>{ss}, istream_iterator<string>{}};
+}
+
+double percMemoriaRAMUtilizada(){
+	
+	string linha;
+	vector<string> linhas;
+	ifstream file;
+
+	file.open("/proc/meminfo");
+
+	 if (file.is_open()){
+          
+      while ( getline (file,linha) ) {
+        //Adicionando linha no vetor de string
+        linhas.push_back(linha);
+      }
+     file.close();
+    }
+
+    unsigned int mTotal=0;
+    unsigned int mLivre=0;
+
+    for(unsigned int i=0;i<linhas.size();i++){
+    	
+    	vector<string> palavras = split(linhas[i]);
+
+    	if(palavras[0] == "MemTotal:" ){
+
+    		mTotal = (unsigned int)std::stoi(palavras[1],nullptr,0);
+    	}else{
+    		if(palavras[0] == "MemFree:" ){
+				mLivre = (unsigned int)std::stoi(palavras[1],nullptr,0);
+    		}	
+    	}
+    }
+
+    return (((double)(mTotal-mLivre))/mTotal)*100;
+}
+
+void matarProcesso(Processo processo){
+
+	string cmd = "kill -9 " + processo.getId();
+
+	system(cmd.c_str());
+}
+
+void impressao(double mem, Processo p, int v,int a, int verm){
+	system("clear");
+
+	cout << "Memória usada: " << mem << endl;
+
+	cout << "\nId do processo que gasta mais memória:" << p.getId() << endl;
+
+	cout << "\nled verde: " << v << endl;
+	cout << "led amarelo:" << a << endl;
+	cout << "led vermelho:" << verm << endl;
+}
+
+	
+	
+int main(int argc, char const *argv[])
+{		
+
+	//Definindo portas
+	GPIO::setup(PORTNUMBER::P9_14,DIRECTION::OUT); 
+	GPIO::setup(PORTNUMBER::P9_11,DIRECTION::OUT);
+	GPIO::setup(PORTNUMBER::P9_12,DIRECTION::OUT);
+	GPIO::setup(PORTNUMBER::P9_13,DIRECTION::IN);
+
+	vector<Processo> processos;
+
+	Processo pMaior;
+
+	while(true){
+
+		processos = API_Processos::ObterProcessos();	
+
+		pMaior = processos[0];
+
+		for(Processo p : processos){
+
+			if(p.getMemoria()>pMaior.getMemoria()){
+				pMaior = p;
+			}
+		}
+		
+		double memoriaUtilizada = percMemoriaRAMUtilizada();
+
+		if(memoriaUtilizada>0 && memoriaUtilizada<25){
+			GPIO::output(PORTNUMBER::P9_14,VALUE::HIGH); 
+			GPIO::output(PORTNUMBER::P9_11,VALUE::LOW);
+			GPIO::output(PORTNUMBER::P9_12,VALUE::LOW);
+
+			impressao(memoriaUtilizada, pMaior, 1,0,0);
+
+		}else{
+			if(memoriaUtilizada>=25 && memoriaUtilizada<50){
+				GPIO::output(PORTNUMBER::P9_14,VALUE::LOW); 
+				GPIO::output(PORTNUMBER::P9_11,VALUE::HIGH);
+				GPIO::output(PORTNUMBER::P9_12,VALUE::LOW);	
+
+				impressao(memoriaUtilizada, pMaior, 0,1,0);
+				
+			}else{
+				if (memoriaUtilizada>=50 and memoriaUtilizada<75){
+					GPIO::output(PORTNUMBER::P9_14,VALUE::LOW); 
+					GPIO::output(PORTNUMBER::P9_11,VALUE::LOW);
+					GPIO::output(PORTNUMBER::P9_12,VALUE::HIGH);
+
+					impressao(memoriaUtilizada, pMaior, 0,0,1);
+
+				}else{
+					GPIO::output(PORTNUMBER::P9_14,VALUE::LOW); 
+					GPIO::output(PORTNUMBER::P9_11,VALUE::LOW);
+					GPIO::output(PORTNUMBER::P9_12,VALUE::LOW);
+
+					impressao(memoriaUtilizada, pMaior, 0,0,0);
+
+					//usleep(250000);
+
+					sleep(2);
+
+					GPIO::output(PORTNUMBER::P9_14,VALUE::HIGH); 
+					GPIO::output(PORTNUMBER::P9_11,VALUE::HIGH);
+					GPIO::output(PORTNUMBER::P9_12,VALUE::HIGH);
+
+					impressao(memoriaUtilizada, pMaior, 1,1,1);
+
+					//usleep(250000);
+
+					int i=0;
+					cout << "Apetar botão: ";
+					cin >>i;
+
+					if(GPIO::input(PORTNUMBER::P9_13)==VALUE::HIGH || i==1){
+						
+						GPIO::output(PORTNUMBER::P9_14,VALUE::LOW); 
+						GPIO::output(PORTNUMBER::P9_11,VALUE::LOW);
+						GPIO::output(PORTNUMBER::P9_12,VALUE::LOW);
+						
+						impressao(memoriaUtilizada, pMaior, 0,0,0);
+
+						matarProcesso(pMaior);
+
+						sleep(3);
+
+					}
+				}
+			}
+		}
+
+		sleep(2);	
+	}
+
+	return 0;
+}
