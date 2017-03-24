@@ -75,10 +75,10 @@ int main(int argc, char const *argv[])
 {		
 
 	//Definindo portas
-	GPIO::setup(PORTNUMBER::P9_14,DIRECTION::OUT); 
-	GPIO::setup(PORTNUMBER::P9_11,DIRECTION::OUT);
-	GPIO::setup(PORTNUMBER::P9_12,DIRECTION::OUT);
-	GPIO::setup(PORTNUMBER::P9_13,DIRECTION::IN);
+	GPIO::setup(PORTNUMBER::P9_14,DIRECTION::OUT); 	//VERDE
+	GPIO::setup(PORTNUMBER::P9_11,DIRECTION::OUT);	//AMARELO
+	GPIO::setup(PORTNUMBER::P9_12,DIRECTION::OUT);	//VERMELHO
+	GPIO::setup(PORTNUMBER::P9_27,DIRECTION::IN);	//BOTAO
 
 	vector<Processo> processos;
 
@@ -140,12 +140,12 @@ int main(int argc, char const *argv[])
 					impressao(memoriaUtilizada, pMaior, 1,1,1);
 
 					//usleep(250000);
-
+					/*
 					int i=0;
 					cout << "Apetar botão: ";
 					cin >>i;
-
-					if(GPIO::input(PORTNUMBER::P9_13)==VALUE::HIGH || i==1){
+					*/
+					if(GPIO::input(PORTNUMBER::P9_27)==VALUE::HIGH /*|| i==1*/){
 						
 						GPIO::output(PORTNUMBER::P9_14,VALUE::LOW); 
 						GPIO::output(PORTNUMBER::P9_11,VALUE::LOW);

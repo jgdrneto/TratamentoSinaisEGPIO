@@ -20,7 +20,7 @@ class Port{
 		VALUE value;
 		DIRECTION direction;
 		
-		std::string PATH_GPIO = "/home/neto/gpio/";
+		std::string PATH_GPIO = "/sys/class/gpio/";
 
 		//FUNCTIONS
 
